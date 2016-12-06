@@ -16,12 +16,19 @@ public class Main {
 	private static Scanner reader;
 	public static InetAddress maquina;
 	public static String alert = "";
-	public final static String[] HMMTRAINED = { "a", "b" };
+	public final static String[] HMMTRAINED = { "GPL POP3 POP3 PASS overflow attempt", "LOIC" };
 	public final static ArrayList<String> HMMTRAINEDLIST = new ArrayList<String>(Arrays.asList(HMMTRAINED));
-	public final static String[] CVE = { ":2017-0001/medium", ":2012-0507/high", ":2017-0002/high", ":2017-0003/low",
-			":2013-0264/high", ":2017-0005/high", ":2017-0001/medium", ":2017-0004/high", ":2017-0006/high",
-			":2017-0007/high", ":2017-0008high", ":2017-0009/high", ":2017-0010/high", ":2017-0003/low",
-			":2015-0235/high", ":2013-5211/high" };
+	public final static String[] CVE = { "ET WEB_CLIENT Possible BeEF Module in use:2017-0001/medium",
+			"ET INFO JAVA - ClassID:2012-0507/high", "ET INFO Java .jar request to dotted-quad domain:2012-0507/high",
+			"ET INFO JAVA - Java Archive Download:2012-0507/high",
+			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high", "Information Leak:2017-0002/high",
+			"Nmap scan:2017-0003/low", "GPL POP3 POP3 PASS overflow attempt:2013-0264/high",
+			"SYSTEM Actions:2017-0005/high", "HTTP Reverse Shell:2017-0004/high", "BypassUAC:2017-0006/high",
+			"Hashdump:2017-0007/high", "Proxychains:2017-0008/high", "Access Admin node:2017-0009/high",
+			"Persistence:2017-0010/high",
+			// "GPL POP3 POP3 PASS overflow attempt:2015-0235/high",
+			"LOIC:2013-5211/high" };
+
 	public static HashMap<String, String> CVEMAP = new HashMap<>();
 
 	public static void main(String[] args) throws Exception {
@@ -32,7 +39,7 @@ public class Main {
 
 		maquina = InetAddress.getByName(args[0]);
 
-		Logstash logstash = new Logstash(512, Main.maquina.getHostAddress());
+		Logstash logstash = new Logstash(5000, Main.maquina.getHostAddress());
 
 		new Thread(logstash).start();
 
@@ -46,26 +53,79 @@ public class Main {
 	}
 
 	public static void processEvent(String log) {
-		String event = log.substring(log.indexOf("\"signature\"") + 13);
-		event = event.substring(0, event.indexOf(",") - 1);
-
-		if (!HMMTRAINEDLIST.contains(event)) {
-			sendToHMM(event);
+		String event;
+		if (log.contains("signature")) {
+			event = log.substring(log.indexOf("\"signature\"") + 13);
+			event = event.substring(0, event.indexOf(",") - 1);
 		} else {
+			event = log;
+		}
+		if (HMMTRAINEDLIST.contains(event)) {
+			sendToHMM(event);
+		}
+		if (event.contains("ET WEB_CLIENT Possible BeEF Module in use")) {
+			String[] nodes = { "BeEF", "Reversing", "Filtración" };
+			sendToDharma(99, "BeEF", nodes, nodes[0], rand(0.35, 0.55), 0.33);
+			String[] nodes2 = { "BeEF", "Reversing", "Sudo", "Filtración", "Pivoting", "Acceso Servidor",
+					"Persistencia" };
+			sendToDharma(97, "Ataque multipaso con persistencia", nodes2, nodes2[0], rand(0.15, 0.40), 0.14);
 
-			switch (event) {
-			case ("aaa"):
-				String[] nodes1 = { "A1", "A2", "A3" };
-				sendToDharma(99, "DDoS", nodes1, nodes1[0], 0.8, 0.34);
-				break;
-			case ("bbb"):
-				String[] nodes2 = { "A1", "A2", "A3" };
-				sendToDharma(99, "DDoS", nodes2, nodes2[0], 0.8, 0.34);
-				break;
+		} else if (event.contains("ET INFO JAVA - ClassID")
+				|| event.contains("ET INFO Java .jar request to dotted-quad domain")
+				|| event.contains("ET INFO JAVA - Java Archive Download")
+				|| event.contains("ET INFO Java .jar request to dotted-quad domain")) {
+			String[] nodes = { "BeEF", "Reversing", "Filtración" };
+			sendToDharma(99, "BeEF", nodes, nodes[1], rand(0.5, 0.65), 0.67);
 
-			default:
-				System.err.println("Evento desconocido");
-			}
+		} else if (event.contains("Information Leak")) {
+			String[] nodes = { "BeEF", "Reversing", "Filtración" };
+			sendToDharma(99, "BeEF", nodes, nodes[2], rand(0.7, 0.95), 1);
+
+		} else if (event.contains("Nmap scan")) {
+			String[] nodes = { "Intento de Intrusión", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[0], rand(0.1, 0.4), 0.25);
+
+		} else if (event.contains("GPL POP3 POP3 PASS overflow attempt")) {
+			String[] nodes = { "Intento de Intrusión", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[2], rand(0.6, 0.9), 0.75);
+
+		} else if (event.contains("SYSTEM Actions")) {
+			String[] nodes = { "Intento de Intrusión", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[3], rand(0.75, 1.0), 1.0);
+
+		} else if (event.contains("HTTP Reverse Shell")) {
+			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtración", "Pivoting", "Acceso Servidor",
+					"Persistencia" };
+			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[1], rand(0.25, 0.45), 0.28);
+
+		} else if (event.contains("BypassUAC")) {
+			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtración", "Pivoting", "Acceso Servidor",
+					"Persistencia" };
+			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[2], rand(0.4, 0.6), 0.42);
+
+		} else if (event.contains("Hashdump")) {
+			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtración", "Pivoting", "Acceso Servidor",
+					"Persistencia" };
+			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[3], rand(0.5, 0.7), 0.57);
+
+		} else if (event.contains("Proxychains")) {
+			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtración", "Pivoting", "Acceso Servidor",
+					"Persistencia" };
+			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[4], rand(0.6, 0.8), 0.70);
+
+		} else if (event.contains("Access Admin node")) {
+			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtración", "Pivoting", "Acceso Servidor",
+					"Persistencia" };
+			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[5], rand(0.7, 0.9), 0.85);
+
+		} else if (event.contains("Persistence")) {
+			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtración", "Pivoting", "Acceso Servidor",
+					"Persistencia" };
+			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[6], rand(0.8, 1.0), 1.0);
+
+		} else if (event.contains("LOIC")) {
+		} else {
+			System.err.println("Evento desconocido");
 		}
 	}
 
@@ -86,7 +146,7 @@ public class Main {
 
 			DatagramSocket elSocket = new DatagramSocket();
 
-			int puerto = 512;
+			int puerto = 6000;
 
 			byte[] cadena = chain.getBytes();
 			DatagramPacket mensaje = new DatagramPacket(cadena, chain.length(), maquina, puerto);
@@ -112,11 +172,18 @@ public class Main {
 			String[] cve = CVEMAP.get(typeAtt).split("/");
 			writer.println("CVE=" + cve[0] + ";Severity=" + cve[1]);
 			writer.close();
-			System.out.println("****  Generado fichero global.dharma  ****");
 		} catch (Exception ex) {
 			System.err.println(ex);
 		}
 
+	}
+
+	private static double rand(double min, double max) {
+		double i = -1.0;
+		while (min > i || i > max) {
+			i = Math.random();
+		}
+		return Math.round(i * 100.0) / 100.0;
 	}
 
 }
