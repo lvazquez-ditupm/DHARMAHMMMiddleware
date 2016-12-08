@@ -40,7 +40,7 @@ public class Main {
 			CVEMAP.put(item.split(":")[0], item.split(":")[1]);
 		}
 
-		maquina = InetAddress.getByName("192.168.10.100");
+		maquina = InetAddress.getByName("127.0.0.1");
 
 		Logstash logstash = new Logstash(5000, Main.maquina.getHostAddress());
 
@@ -68,22 +68,22 @@ public class Main {
 			sendToHMM(event);
 		}
 		if (event.contains("ET WEB_CLIENT Possible BeEF Module in use")) {
-			String[] nodes = { "BeEF", "Reversing", "Filtracion" };
+			String[] nodes = { "BeEF", "Reverse Shell", "Filtracion" };
 			sendToDharma(99, "BeEF", nodes, nodes[0], rand(0.35, 0.55), 0.33);
-			String[] nodes2 = { "BeEF", "Reversing", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
+			String[] nodes2 = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "Ataque multipaso con persistencia", nodes2, nodes2[0], rand(0.15, 0.40), 0.14);
 
 		} else if (event.contains("ET INFO JAVA - ClassID")
 				|| event.contains("ET INFO Java .jar request to dotted-quad domain")
 				|| event.contains("ET INFO JAVA - Java Archive Download")
 				|| event.contains("ET INFO Java .jar request to dotted-quad domain")) {
-			String[] nodes = { "BeEF", "Reversing", "Filtracion" };
+			String[] nodes = { "BeEF", "Reverse Shell", "Filtracion" };
 			sendToDharma(99, "BeEF", nodes, nodes[1], rand(0.5, 0.65), 0.67);
 
 		} else if (event.contains("Information Leak")) {
-			String[] nodes = { "BeEF", "Reversing", "Filtracion" };
+			String[] nodes = { "BeEF", "Reverse Shell", "Filtracion" };
 			sendToDharma(99, "BeEF", nodes, nodes[2], rand(0.7, 0.95), 1);
-			String[] nodes2 = { "BeEF", "Reversing", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
+			String[] nodes2 = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "Ataque multipaso con persistencia", nodes2, nodes2[3], rand(0.5, 0.7), 0.57);
 
 		} else if (event.contains("Nmap scan")) {
@@ -100,19 +100,19 @@ public class Main {
 			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[3], rand(0.75, 1.0), 1.0);
 
 		} else if (event.contains("HTTP Reverse Shell")) {
-			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
+			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[1], rand(0.25, 0.45), 0.28);
 
 		} else if (event.contains("BypassUAC")) {
-			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
+			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[2], rand(0.4, 0.6), 0.42);
 
 		} else if (event.contains("Access Admin node")) {
-			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
+			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[4], rand(0.7, 0.9), 0.85);
 
 		} else if (event.contains("Persistence")) {
-			String[] nodes = { "BeEF", "Reversing", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
+			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "Ataque multipaso con persistencia", nodes, nodes[5], rand(0.8, 1.0), 1.0);
 
 		} else if (event.contains("LOIC")) {
