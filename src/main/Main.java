@@ -18,7 +18,7 @@ public class Main {
 	private static Scanner reader;
 	public static InetAddress maquina;
 	public static String alert = "";
-	public final static String[] HMMTRAINED = { "GPL POP3 POP3 PASS overflow attempt", "GPL SHELLCODE x86 incebx NOOP",
+	public final static String[] HMMTRAINED = { "GPL POP3 POP3 PASS overflow attempt", "GPL SHELLCODE x86 inc ebx NOOP",
 			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String" };
 	public final static ArrayList<String> HMMTRAINEDLIST = new ArrayList<String>(Arrays.asList(HMMTRAINED));
 	public final static String[] CVE = { "ET WEB_CLIENT Possible BeEF Module in use:2017-0001/medium",
@@ -26,23 +26,43 @@ public class Main {
 			"ET INFO JAVA - Java Archive Download:2012-0507/high",
 			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high", "Information Leak:2017-0002/high",
 			"Nmap scan:2017-0003/low", "GPL POP3 POP3 PASS overflow attempt:2013-0264/high",
-			"GPL SHELLCODE x86 incebx NOOP:2013-0264/high", "SYSTEM Actions:2017-0005/high",
-			"HTTP Reverse Shell:2017-0004/high", "BypassUAC:2017-0006/high", "Access Admin node:2017-0009/high",
-			"Persistence:2017-0010/high",
-			// "GPL POP3 POP3 PASS overflow attempt:2015-0235/high",
+			"GPL SHELLCODE x86 inc ebx NOOP:2013-0264/high", "SYSTEM Actions:2017-0005/high",
+			"HTTP Reverse Shell:2017-0004/high", "Successful sudo to ROOT executed:2017-0006/high",
+			"Access Admin node:2017-0009/high", "Persistence:2017-0010/high",
 			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String:2013-5211/high" };
 
 	public static HashMap<String, String> CVEMAP = new HashMap<>();
+	public static String IPlocal;
+	public static String IPDharma;
+	public static int socketInPort;
+	public static int socketOutPort;
+	public static String HMMinputroute;
+	public static String IPMySQL;
+	public static String MySQLUser;
+	public static String MySQLPass;
 
 	public static void main(String[] args) throws Exception {
+
+		IPlocal = args[0];
+		IPDharma = args[1];
+		socketInPort = Integer.parseInt(args[2]);
+		socketOutPort = Integer.parseInt(args[3]);
+		HMMinputroute = args[4];
+		IPMySQL = args[5];
+		MySQLUser = args[6];
+		if(args.length==8){
+			MySQLPass = args[7];
+		}else{
+			MySQLPass="";
+		}
 
 		for (String item : CVE) {
 			CVEMAP.put(item.split(":")[0], item.split(":")[1]);
 		}
 
-		maquina = InetAddress.getByName("127.0.0.1");
+		maquina = InetAddress.getByName(IPlocal);
 
-		Logstash logstash = new Logstash(5000, Main.maquina.getHostAddress());
+		Logstash logstash = new Logstash(socketInPort, maquina.getHostAddress());
 
 		new Thread(logstash).start();
 
@@ -91,7 +111,7 @@ public class Main {
 			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[0], rand(0.1, 0.4), 0.25);
 
 		} else if (event.contains("GPL POP3 POP3 PASS overflow attempt")
-				|| event.contains("GPL SHELLCODE x86 incebx NOOP")) {
+				|| event.contains("GPL SHELLCODE x86 inc ebx NOOP")) {
 			String[] nodes = { "Intento de intrusion", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
 			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[2], rand(0.6, 0.9), 0.75);
 
@@ -103,7 +123,7 @@ public class Main {
 			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "APT", nodes, nodes[1], rand(0.25, 0.45), 0.28);
 
-		} else if (event.contains("BypassUAC")) {
+		} else if (event.contains("Successful sudo to ROOT executed")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "APT", nodes, nodes[2], rand(0.4, 0.6), 0.42);
 
@@ -138,10 +158,9 @@ public class Main {
 
 			DatagramSocket elSocket = new DatagramSocket();
 
-			int puerto = 6000;
-
 			byte[] cadena = chain.getBytes();
-			DatagramPacket mensaje = new DatagramPacket(cadena, chain.length(), maquina, puerto);
+			DatagramPacket mensaje = new DatagramPacket(cadena, chain.length(), InetAddress.getByName(IPDharma),
+					socketOutPort);
 
 			mensaje.setData(cadena);
 			mensaje.setLength(chain.length());
@@ -160,11 +179,12 @@ public class Main {
 	public static void sendToHMM(String typeAtt) {
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter(new BufferedWriter(new FileWriter("./events.hmm", true)));
-							
+			writer = new PrintWriter(new BufferedWriter(new FileWriter(HMMinputroute, true)));
 			String[] cve = CVEMAP.get(typeAtt).split("/");
 			writer.println("CVE=" + cve[0] + ";Severity=" + cve[1]);
 			writer.close();
+			Runtime.getRuntime().exec("java -jar ./HMMprediction.jar ./ddos.conf +" + HMMinputroute + " " + IPMySQL
+					+ " " + socketOutPort + " "+MySQLUser+" "+MySQLPass);
 		} catch (Exception ex) {
 			System.err.println(ex);
 		}
