@@ -18,15 +18,15 @@ public class Main {
 	private static Scanner reader;
 	public static InetAddress maquina;
 	public static String alert = "";
-	public final static String[] HMMTRAINED = { "GPL POP3 POP3 PASS overflow attempt", "GPL SHELLCODE x86 inc ebx NOOP",
+	public final static String[] HMMTRAINED = { "Nmap scan", "GPL POP3 POP3 PASS overflow attempt", "GPL SHELLCODE x86 inc ebx NOOP",
 			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String" };
 	public final static ArrayList<String> HMMTRAINEDLIST = new ArrayList<String>(Arrays.asList(HMMTRAINED));
 	public final static String[] CVE = { "ET WEB_CLIENT Possible BeEF Module in use:2017-0001/medium",
 			"ET INFO JAVA - ClassID:2012-0507/high", "ET INFO Java .jar request to dotted-quad domain:2012-0507/high",
 			"ET INFO JAVA - Java Archive Download:2012-0507/high",
 			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high", "Information Leak:2017-0002/high",
-			"Nmap scan:2017-0003/low", "GPL POP3 POP3 PASS overflow attempt:2013-0264/high",
-			"GPL SHELLCODE x86 inc ebx NOOP:2013-0264/high", "SYSTEM Actions:2017-0005/high",
+			"Nmap scan:1999-0977/low", "GPL POP3 POP3 PASS overflow attempt:2003-0264/high",
+			"GPL SHELLCODE x86 inc ebx NOOP:2003-0264/high", "SYSTEM Actions:2017-0005/high",
 			"HTTP Reverse Shell:2017-0004/high", "Successful sudo to ROOT executed:2017-0006/high",
 			"Access Admin node:2017-0009/high", "Persistence:2017-0010/high",
 			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String:2013-5211/high" };
@@ -144,14 +144,13 @@ public class Main {
 	public static void sendToDharma(int idAtt, String typeAtt, String[] nodes, String state, double pState,
 			double pFinal) {
 
-		String nodes_ = "(";
+		String nodes_ = "";
 		for (String node : nodes) {
 			nodes_ += node + (",");
 		}
 		nodes_ = nodes_.substring(0, nodes_.length() - 1);
-		nodes_ += ")";
 
-		String chain = "HMM: IDAtaque=" + idAtt + ";TipoAtaque=" + typeAtt + ";Nodos=" + nodes_ + ";Estado=" + state
+		String chain = "IDAtaque=" + idAtt + ";TipoAtaque=" + typeAtt + ";Nodos=" + nodes_ + ";Estado=" + state
 				+ ";PEstado=" + pState + ";PFFinal=" + pFinal;
 
 		try {
@@ -183,8 +182,10 @@ public class Main {
 			String[] cve = CVEMAP.get(typeAtt).split("/");
 			writer.println("CVE=" + cve[0] + ";Severity=" + cve[1]);
 			writer.close();
-			Runtime.getRuntime().exec("java -jar ./HMMprediction.jar ./ddos.conf +" + HMMinputroute + " " + IPMySQL
-					+ " " + socketOutPort + " "+MySQLUser+" "+MySQLPass);
+			String cmd = "java -jar HMMprediction.jar ddos.conf " + HMMinputroute + " " + IPMySQL
+					+ " " + socketOutPort + " "+MySQLUser+" "+MySQLPass;
+			//System.out.println(cmd);
+			Runtime.getRuntime().exec(cmd);
 		} catch (Exception ex) {
 			System.err.println(ex);
 		}
