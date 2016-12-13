@@ -18,18 +18,19 @@ public class Main {
 	private static Scanner reader;
 	public static InetAddress maquina;
 	public static String alert = "";
-	public final static String[] HMMTRAINED = { "Nmap scan", "GPL POP3 POP3 PASS overflow attempt", "GPL SHELLCODE x86 inc ebx NOOP",
-			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String" };
+	public final static String[] HMMTRAINED = { "Nmap scan", "GPL POP3 POP3 PASS overflow attempt",
+			"GPL SHELLCODE x86 inc ebx NOOP", "ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String" };
 	public final static ArrayList<String> HMMTRAINEDLIST = new ArrayList<String>(Arrays.asList(HMMTRAINED));
-	public final static String[] CVE = { "ET WEB_CLIENT Possible BeEF Module in use:2017-0001/medium",
-			"ET INFO JAVA - ClassID:2012-0507/high", "ET INFO Java .jar request to dotted-quad domain:2012-0507/high",
-			"ET INFO JAVA - Java Archive Download:2012-0507/high",
-			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high", "Information Leak:2017-0002/high",
-			"Nmap scan:1999-0977/low", "GPL POP3 POP3 PASS overflow attempt:2003-0264/high",
-			"GPL SHELLCODE x86 inc ebx NOOP:2003-0264/high", "SYSTEM Actions:2017-0005/high",
-			"HTTP Reverse Shell:2017-0004/high", "Successful sudo to ROOT executed:2017-0006/high",
-			"Access Admin node:2017-0009/high", "Persistence:2017-0010/high",
-			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String:2013-5211/high" };
+	public final static String[] CVE = { "ET WEB_CLIENT Possible BeEF Module in use:2017-0001/medium/1.5",
+			"ET INFO JAVA - ClassID:2012-0507/high/3",
+			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high/3",
+			"ET INFO JAVA - Java Archive Download:2012-0507/high/3",
+			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high/3", "Information Leak:2017-0002/high/5",
+			"Nmap scan:1999-0977/low/0.75", "GPL POP3 POP3 PASS overflow attempt:2003-0264/high/3.5",
+			"GPL SHELLCODE x86 inc ebx NOOP:2003-0264/high/3.5", "SYSTEM Actions:2017-0005/high/4",
+			"HTTP Reverse Shell:2017-0004/high/3", "Successful sudo to ROOT executed:2017-0006/high/3.5",
+			"Access Admin node:2017-0009/high/5.2", "Persistence:2017-0010/high/5.5",
+			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String:2013-5211/high/3.8" };
 
 	public static HashMap<String, String> CVEMAP = new HashMap<>();
 	public static String IPlocal;
@@ -50,10 +51,10 @@ public class Main {
 		HMMinputroute = args[4];
 		IPMySQL = args[5];
 		MySQLUser = args[6];
-		if(args.length==8){
+		if (args.length == 8) {
 			MySQLPass = args[7];
-		}else{
-			MySQLPass="";
+		} else {
+			MySQLPass = "";
 		}
 
 		for (String item : CVE) {
@@ -63,7 +64,10 @@ public class Main {
 		maquina = InetAddress.getByName(IPlocal);
 
 		Logstash logstash = new Logstash(socketInPort, maquina.getHostAddress());
+		HMM hmm = new HMM("java -jar HMMprediction.jar ddos.conf " + HMMinputroute + " " + IPMySQL + " " + socketOutPort
+				+ " " + MySQLUser + " " + MySQLPass);
 
+		new Thread(hmm).start();
 		new Thread(logstash).start();
 
 		while (true) {
@@ -87,53 +91,56 @@ public class Main {
 		if (HMMTRAINEDLIST.contains(event)) {
 			sendToHMM(event);
 		}
+		
+		Double risk = Double.parseDouble(CVEMAP.get(event).split("/")[2]);
+		
 		if (event.contains("ET WEB_CLIENT Possible BeEF Module in use")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Filtracion" };
-			sendToDharma(99, "BeEF", nodes, nodes[0], rand(0.35, 0.55), 0.33);
+			sendToDharma(99, "BeEF", nodes, nodes[0], rand(0.35, 0.55), 0.33, risk);
 			String[] nodes2 = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
-			sendToDharma(97, "APT", nodes2, nodes2[0], rand(0.15, 0.40), 0.14);
+			sendToDharma(97, "APT", nodes2, nodes2[0], rand(0.15, 0.40), 0.14, risk);
 
 		} else if (event.contains("ET INFO JAVA - ClassID")
 				|| event.contains("ET INFO Java .jar request to dotted-quad domain")
 				|| event.contains("ET INFO JAVA - Java Archive Download")
 				|| event.contains("ET INFO Java .jar request to dotted-quad domain")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Filtracion" };
-			sendToDharma(99, "BeEF", nodes, nodes[1], rand(0.5, 0.65), 0.67);
+			sendToDharma(99, "BeEF", nodes, nodes[1], rand(0.5, 0.65), 0.67, risk);
 
 		} else if (event.contains("Information Leak")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Filtracion" };
-			sendToDharma(99, "BeEF", nodes, nodes[2], rand(0.7, 0.95), 1);
+			sendToDharma(99, "BeEF", nodes, nodes[2], rand(0.7, 0.95), 1, risk);
 			String[] nodes2 = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
-			sendToDharma(97, "APT", nodes2, nodes2[3], rand(0.5, 0.7), 0.57);
+			sendToDharma(97, "APT", nodes2, nodes2[3], rand(0.5, 0.7), 0.57, risk);
 
 		} else if (event.contains("Nmap scan")) {
 			String[] nodes = { "Intento de intrusion", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
-			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[0], rand(0.1, 0.4), 0.25);
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[0], rand(0.1, 0.4), 0.25, risk);
 
 		} else if (event.contains("GPL POP3 POP3 PASS overflow attempt")
 				|| event.contains("GPL SHELLCODE x86 inc ebx NOOP")) {
 			String[] nodes = { "Intento de intrusion", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
-			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[2], rand(0.6, 0.9), 0.75);
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[2], rand(0.6, 0.9), 0.75, risk);
 
 		} else if (event.contains("SYSTEM Actions")) {
 			String[] nodes = { "Intento de intrusion", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
-			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[3], rand(0.75, 1.0), 1.0);
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[3], rand(0.75, 1.0), 1.0, risk);
 
 		} else if (event.contains("HTTP Reverse Shell")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
-			sendToDharma(97, "APT", nodes, nodes[1], rand(0.25, 0.45), 0.28);
+			sendToDharma(97, "APT", nodes, nodes[1], rand(0.25, 0.45), 0.28, risk);
 
 		} else if (event.contains("Successful sudo to ROOT executed")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
-			sendToDharma(97, "APT", nodes, nodes[2], rand(0.4, 0.6), 0.42);
+			sendToDharma(97, "APT", nodes, nodes[2], rand(0.4, 0.6), 0.42, risk);
 
 		} else if (event.contains("Access Admin node")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
-			sendToDharma(97, "APT", nodes, nodes[4], rand(0.7, 0.9), 0.85);
+			sendToDharma(97, "APT", nodes, nodes[4], rand(0.7, 0.9), 0.85, risk);
 
 		} else if (event.contains("Persistence")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
-			sendToDharma(97, "APT", nodes, nodes[5], rand(0.8, 1.0), 1.0);
+			sendToDharma(97, "APT", nodes, nodes[5], rand(0.8, 1.0), 1.0, risk);
 
 		} else if (event.contains("LOIC")) {
 		} else {
@@ -142,7 +149,7 @@ public class Main {
 	}
 
 	public static void sendToDharma(int idAtt, String typeAtt, String[] nodes, String state, double pState,
-			double pFinal) {
+			double pFinal, double risk) {
 
 		String nodes_ = "";
 		for (String node : nodes) {
@@ -151,8 +158,9 @@ public class Main {
 		nodes_ = nodes_.substring(0, nodes_.length() - 1);
 
 		String chain = "IDAtaque=" + idAtt + ";TipoAtaque=" + typeAtt + ";Nodos=" + nodes_ + ";Estado=" + state
-				+ ";PEstado=" + pState + ";PFFinal=" + pFinal;
+				+ ";PEstado=" + pState + ";PFFinal=" + pFinal + ";Risk=" + risk;
 
+		System.out.println(chain);
 		try {
 
 			DatagramSocket elSocket = new DatagramSocket();
@@ -180,12 +188,8 @@ public class Main {
 		try {
 			writer = new PrintWriter(new BufferedWriter(new FileWriter(HMMinputroute, true)));
 			String[] cve = CVEMAP.get(typeAtt).split("/");
-			writer.println("CVE=" + cve[0] + ";Severity=" + cve[1]);
+			writer.println("CVE=" + cve[0] + ";Severity=" + cve[1] + ";Risk=" + cve[2]);
 			writer.close();
-			String cmd = "java -jar HMMprediction.jar ddos.conf " + HMMinputroute + " " + IPMySQL
-					+ " " + socketOutPort + " "+MySQLUser+" "+MySQLPass;
-			//System.out.println(cmd);
-			Runtime.getRuntime().exec(cmd);
 		} catch (Exception ex) {
 			System.err.println(ex);
 		}
