@@ -44,7 +44,6 @@ public class Logstash implements Runnable {
 				}
 			} catch (Exception e) {
 			}
-			
 			Main.processEvent(log);
 
 		}

@@ -18,23 +18,24 @@ public class Main {
 	private static Scanner reader;
 	public static InetAddress maquina;
 	public static String alert = "";
-	public final static String[] HMMTRAINED = { "Nmap scan", "GPL POP3 POP3 PASS overflow attempt",
-			"GPL SHELLCODE x86 inc ebx NOOP", "ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String" };
+	public final static String[] HMMTRAINED = { "ET SCAN NMAP OS Detection Probe", "GPL POP3 POP3 PASS overflow attempt",
+			"GPL SHELLCODE x86 inc ebx NOOP", "ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu string" };
 	public final static ArrayList<String> HMMTRAINEDLIST = new ArrayList<String>(Arrays.asList(HMMTRAINED));
 	public final static String[] CVE = { "ET WEB_CLIENT Possible BeEF Module in use:2017-0001/medium/1.5",
 			"ET INFO JAVA - ClassID:2012-0507/high/3",
 			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high/3",
 			"ET INFO JAVA - Java Archive Download:2012-0507/high/3",
 			"ET INFO Java .jar request to dotted-quad domain:2012-0507/high/3", "Information Leak:2017-0002/high/5",
-			"Nmap scan:1999-0977/low/0.75", "GPL POP3 POP3 PASS overflow attempt:2003-0264/high/3.5",
+			"ET SCAN NMAP OS Detection Probe:1999-0977/low/0.75", "GPL POP3 POP3 PASS overflow attempt:2003-0264/high/3.5",
 			"GPL SHELLCODE x86 inc ebx NOOP:2003-0264/high/3.5", "SYSTEM Actions:2017-0005/high/4",
 			"HTTP Reverse Shell:2017-0004/high/3", "Successful sudo to ROOT executed:2017-0006/high/3.5",
 			"Access Admin node:2017-0009/high/5.2", "Persistence:2017-0010/high/5.5",
-			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu String:2013-5211/high/3.8" };
+			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu string:2013-5211/high/3.8" };
 
 	public static HashMap<String, String> CVEMAP = new HashMap<>();
 	public static String IPlocal;
 	public static String IPDharma;
+	public static Double risk;
 	public static int socketInPort;
 	public static int socketOutPort;
 	public static String HMMinputroute;
@@ -56,7 +57,11 @@ public class Main {
 		} else {
 			MySQLPass = "";
 		}
-
+		
+		BufferedWriter bw = new BufferedWriter(new FileWriter(HMMinputroute));
+		bw.write("");
+		bw.close();
+		
 		for (String item : CVE) {
 			CVEMAP.put(item.split(":")[0], item.split(":")[1]);
 		}
@@ -76,6 +81,7 @@ public class Main {
 			String event = reader.nextLine();
 			System.out.println("");
 			processEvent(event);
+
 		}
 	}
 
@@ -88,12 +94,15 @@ public class Main {
 		} else {
 			event = log;
 		}
+
+		if (CVEMAP.get(event) != null) {
+			risk = Double.parseDouble(CVEMAP.get(event).split("/")[2]);
+		}
+
 		if (HMMTRAINEDLIST.contains(event)) {
 			sendToHMM(event);
 		}
-		
-		Double risk = Double.parseDouble(CVEMAP.get(event).split("/")[2]);
-		
+
 		if (event.contains("ET WEB_CLIENT Possible BeEF Module in use")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Filtracion" };
 			sendToDharma(99, "BeEF", nodes, nodes[0], rand(0.35, 0.55), 0.33, risk);
@@ -113,18 +122,21 @@ public class Main {
 			String[] nodes2 = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
 			sendToDharma(97, "APT", nodes2, nodes2[3], rand(0.5, 0.7), 0.57, risk);
 
-		} else if (event.contains("Nmap scan")) {
+		} else if (event.contains("ET SCAN NMAP OS Detection Probe")) {
 			String[] nodes = { "Intento de intrusion", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
-			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[0], rand(0.1, 0.4), 0.25, risk);
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[0], rand(0.1, 0.4), 0.25,
+					risk);
 
 		} else if (event.contains("GPL POP3 POP3 PASS overflow attempt")
 				|| event.contains("GPL SHELLCODE x86 inc ebx NOOP")) {
 			String[] nodes = { "Intento de intrusion", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
-			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[2], rand(0.6, 0.9), 0.75, risk);
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[2], rand(0.6, 0.9), 0.75,
+					risk);
 
 		} else if (event.contains("SYSTEM Actions")) {
 			String[] nodes = { "Intento de intrusion", "Buffer Overflow", "Sudo", "Acciones SYSTEM" };
-			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[3], rand(0.75, 1.0), 1.0, risk);
+			sendToDharma(98, "Control de sistema mediante Buffer Overflow", nodes, nodes[3], rand(0.75, 1.0), 1.0,
+					risk);
 
 		} else if (event.contains("HTTP Reverse Shell")) {
 			String[] nodes = { "BeEF", "Reverse Shell", "Sudo", "Filtracion", "Acceso Servidor", "Persistencia" };
