@@ -14,7 +14,6 @@ public class HMM implements Runnable {
 	public void run() {
 
 		try {
-			System.out.println(cmd);
 			Runtime.getRuntime().exec(cmd);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
