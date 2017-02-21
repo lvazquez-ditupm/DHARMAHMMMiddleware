@@ -6,6 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -25,10 +27,17 @@ public class Main {
 			"GPL POP3 POP3 PASS overflow attempt:2003-0264/high/3.5",
 			"GPL SHELLCODE x86 inc ebx NOOP:2003-0264/high/3.5", "Admin User doing Suspicious Actions:2017-0005/high/4",
 			"HTTP Reverse Shell:2017-0004/high/3", "Successful sudo to ROOT executed:2017-0006/high/3.5",
-			"External Access to System:2017-0009/high/5.2", "New User Created:2017-0010/high/5.5",
+			"External Access to System:2017-0009/high/5.2", "User account enabled or created.:2017-0010/high/5.5",
 			"ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu string:2013-5211/high/3.8" };
-
 	public static HashMap<String, String> CVEMAP = new HashMap<>();
+
+	public final static String[] EVENTSANOMALY = {
+			"GPL POP3 POP3 PASS overflow attempt/Successful sudo to ROOT executed",
+			"ET WEB_CLIENT Possible BeEF Module in use/Successful sudo to ROOT executed",
+			"Successful sudo to ROOT executed/User account enabled or created." };
+	public static HashMap<String, ArrayList<String>> EVENTSANOMALYMAP = new HashMap<>();
+
+	public static HashMap<Integer, String> lastEvent = new HashMap<>();
 	public static String IPlocal;
 	public static String IPDharma;
 	public static Double risk;
@@ -72,6 +81,11 @@ public class Main {
 			CVEMAP.put(item.split(":")[0], item.split(":")[1]);
 		}
 
+		for (String item : EVENTSANOMALY) {
+			EVENTSANOMALYMAP.put(item.split("/")[0],
+					new ArrayList<String>(Arrays.asList(item.split("/")[1].split(","))));
+		}
+
 		maquina = InetAddress.getByName(IPlocal);
 
 		Logstash logstash = new Logstash(socketInPort, maquina.getHostAddress());
@@ -91,7 +105,7 @@ public class Main {
 
 	public static void processEvent(String log) {
 		String event;
-		
+
 		if (log.contains("signature")) {
 			if (log.contains("src_ip")) {
 				ipSrc = log.substring(log.indexOf("src_ip") + 11);
@@ -139,8 +153,6 @@ public class Main {
 			event = log.substring(log.indexOf("RC: ") + 6);
 			event = event.substring(0, event.indexOf(";") - 2);
 
-			
-
 		} else if (log.contains("DELETE")) {
 			delete(Integer.parseInt(log.substring(7)));
 			return;
@@ -156,49 +168,46 @@ public class Main {
 		}
 
 		if (event.contains("ET WEB_CLIENT Possible BeEF Module in use")) {
-			sendToHMM(1, event, ipDst, portDst);
-			sendToHMM(3, event, ipDst, portDst);
+			sendToHMM(1, event, ipDst, portDst, false);
+			sendToHMM(3, event, ipDst, portDst, false);
 		} else if (event.contains("ET INFO JAVA - ClassID")
 				|| event.contains("ET INFO Java .jar request to dotted-quad domain")
 				|| event.contains("ET INFO JAVA - Java Archive Download")
 				|| event.contains("ET INFO Java .jar request to dotted-quad domain")) {
-			sendToHMM(1, event, ipSrc, portSrc);
+			sendToHMM(1, event, ipSrc, portSrc, false);
 		} else if (event.contains("Possible Information Leak")) {
-			sendToHMM(1, event, ipSrc, portSrc);
-			sendToHMM(3, event, ipSrc, portSrc);
+			sendToHMM(1, event, ipDst, portDst, false);
+			sendToHMM(3, event, ipDst, portDst, false);
 		} else if (event.contains("ET SCAN NMAP OS Detection Probe")) {
-			sendToHMM(2, event, ipDst, portDst);
-			sendToHMM(4, event, ipDst, portDst);
+			sendToHMM(2, event, ipDst, portDst, false);
+			sendToHMM(4, event, ipDst, portDst, false);
 		} else if (event.contains("GPL POP3 POP3 PASS overflow attempt")
 				|| event.contains("GPL SHELLCODE x86 inc ebx NOOP")) {
-			sendToHMM(2, event, ipDst, portDst);
-			sendToHMM(4, event, ipDst, portDst);
+			sendToHMM(2, event, ipDst, portDst, false);
+			sendToHMM(4, event, ipDst, portDst, false);
 		} else if (event.contains("Admin User doing Suspicious Actions")) {
-			sendToHMM(2, event, ipSrc, portSrc);
+			sendToHMM(2, event, ipDst, portDst, false);
 		} else if (event.contains("Successful sudo to ROOT executed")) {
-			sendToHMM(2, event, ipDst, portDst);
-			sendToHMM(3, event, ipDst, portDst);
-			/*
-			 * } else if (event.contains("External Access to System")) {
-			 * sendToHMM(3, event, ip);
-			 */
+			sendToHMM(2, event, ipDst, portDst, true);
+			sendToHMM(3, event, ipDst, portDst, true);
 		} else if (event.contains("User account enabled or created")) {
-			sendToHMM(3, event, ipSrc, portSrc);
+			sendToHMM(3, event, ipSrc, portSrc, true);
 		} else if (event.contains("ET DOS Inbound Low Orbit Ion Cannon LOIC DDOS Tool desu string")) {
-			sendToHMM(4, event, ipSrc, portSrc);
+			sendToHMM(4, event, ipSrc, portSrc, false);
 		}
+		System.out.println();
 	}
 
 	private static void delete(int id) {
 		Process p = processPool.get(id);
 		p.destroy();
-		for (Map.Entry<String, HashMap<Integer, Integer>> ipsItem : HMMtable.entrySet()){
-			for (Map.Entry<Integer, Integer> attItem : ipsItem.getValue().entrySet()){
-				if (attItem.getValue() == id){
+		for (Map.Entry<String, HashMap<Integer, Integer>> ipsItem : HMMtable.entrySet()) {
+			for (Map.Entry<Integer, Integer> attItem : ipsItem.getValue().entrySet()) {
+				if (attItem.getValue() == id) {
 					HMMtable.get(ipsItem.getKey()).remove(attItem.getKey());
-					System.out.println("Eliminado ataque "+id);
-					if (HMMtable.get(ipsItem.getKey()).isEmpty()){
-						System.out.println ("Eliminada IP "+ipsItem.getKey());
+					System.out.println("Eliminado ataque " + id);
+					if (HMMtable.get(ipsItem.getKey()).isEmpty()) {
+						System.out.println("Eliminada IP " + ipsItem.getKey());
 						HMMtable.remove(ipsItem);
 					}
 					break;
@@ -207,8 +216,8 @@ public class Main {
 		}
 	}
 
-	public static void sendToHMM(int idAtt, String typeAtt, String ip, int port) {
-		if (!HMMtable.containsKey(ip) || !HMMtable.get(ip).containsKey(idAtt)) {
+	public static void sendToHMM(int idAtt, String typeAtt, String ip, int port, boolean falsePositive) {
+		if (!falsePositive && (!HMMtable.containsKey(ip) || !HMMtable.get(ip).containsKey(idAtt))) {
 			HashMap<Integer, Integer> attToChain = new HashMap<>();
 			attToChain.put(idAtt, idHMM);
 			if (HMMtable.containsKey(ip)) {
@@ -216,40 +225,72 @@ public class Main {
 			} else {
 				HMMtable.put(ip, attToChain);
 			}
-			
-			System.out.print(" enviado a nueva cadena\n");
-			
-			String cmd = "java -jar HMMprediction.jar attack" + idAtt + ".conf input" + idHMM + ".hmm " + IPMySQL + " " + socketOutPort + " " + MySQLUser + " " + MySQLPass;
-			
+
+			String cmd = "java -jar /home/usuario/ejecutable_MCCD/HMMprediction.jar /home/usuario/ejecutable_MCCD/attack"
+					+ idAtt + ".conf /home/usuario/ejecutable_MCCD/input" + idHMM + ".hmm " + IPMySQL + " "
+					+ socketOutPort + " " + MySQLUser + " " + MySQLPass;
+
 			try {
-				//System.out.println(ip);
-				//System.out.println(cmd);
+				// System.out.println(ip);
+				// System.out.println(cmd);
 				Process p = Runtime.getRuntime().exec(cmd);
-				processPool.put(idHMM++, p);
+				processPool.put(idHMM, p);
+				idHMM++;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		
-		System.out.print(" enviado a cadena existente\n");
-		
+
+		try {
+			if (HMMtable.get(ip) == null || HMMtable.get(ip).get(idAtt) == null) {
+				return;
+			}
+		} catch (Exception e) {
+			System.out.println(e);
+			System.out.println(ip);
+			System.out.println(idAtt);
+			System.out.println(HMMtable.get(ip).get(idAtt));
+		}
+		String lastEvent_ = lastEvent.get(HMMtable.get(ip).get(idAtt));
+
+		ArrayList<String> positiveAnomaly = EVENTSANOMALYMAP.get(lastEvent_);
+
+		if (HMMtable.get(ip).get(idAtt) == null || (falsePositive && lastEvent_ != null && positiveAnomaly != null
+				&& !positiveAnomaly.contains(typeAtt))) {
+			System.out.print(" \n\t Falso positivo en ataque " + HMMtable.get(ip).get(idAtt));
+			return;
+		}
+
+		lastEvent.put(HMMtable.get(ip).get(idAtt), typeAtt);
+
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter(
-					new BufferedWriter(new FileWriter("input" + HMMtable.get(ip).get(idAtt) + ".hmm", true)));
+			String ipVictim = ip;
+			String ipAttacker = "";
+
+			if (ipSrc == ipVictim) {
+				ipAttacker = ipDst;
+			} else {
+				ipAttacker = ipSrc;
+			}
+
+			writer = new PrintWriter(new BufferedWriter(new FileWriter(
+					"/home/usuario/ejecutable_MCCD/input" + HMMtable.get(ip).get(idAtt) + ".hmm", true)));
+			
 			String[] cve = CVEMAP.get(typeAtt).split("/");
-			String output = "CVE=" + cve[0] + ";Severity=" + cve[1] + ";Risk=" + cve[2] + ";ID=" + HMMtable.get(ip).get(idAtt);
-			if (ipSrc!=""){
-				output+=";IPsrc="+ipSrc;
+			String output = "CVE=" + cve[0] + ";Severity=" + cve[1] + ";Risk=" + cve[2] + ";ID="
+					+ HMMtable.get(ip).get(idAtt);
+			if (ipSrc != "") {
+				output += ";IPsrc=" + ipAttacker;
 			}
-			if (ipDst!=""){
-				output+=";IPdst="+ipDst;
+			if (ipDst != "") {
+				output += ";IPdst=" + ipVictim;
 			}
-			if (port != 0){
-				output += ";Port="+port;
+			if (port != 0) {
+				output += ";Port=" + port;
 			}
-			if (timestamp != ""){
-				output+=";Timestamp="+timestamp;
+			if (timestamp != "") {
+				output += ";Timestamp=" + timestamp;
 			}
 			writer.println(output);
 			writer.close();
