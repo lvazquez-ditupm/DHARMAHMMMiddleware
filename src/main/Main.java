@@ -226,8 +226,8 @@ public class Main {
 				HMMtable.put(ip, attToChain);
 			}
 
-			String cmd = "java -jar /home/usuario/ejecutable_MCCD/HMMprediction.jar /home/usuario/ejecutable_MCCD/attack"
-					+ idAtt + ".conf /home/usuario/ejecutable_MCCD/input" + idHMM + ".hmm " + IPMySQL + " "
+			String cmd = "java -jar ./HMMprediction.jar ./attack"
+					+ idAtt + ".conf ./input" + idHMM + ".hmm " + IPMySQL + " "
 					+ socketOutPort + " " + MySQLUser + " " + MySQLPass;
 
 			try {
@@ -275,7 +275,7 @@ public class Main {
 			}
 
 			writer = new PrintWriter(new BufferedWriter(new FileWriter(
-					"/home/usuario/ejecutable_MCCD/input" + HMMtable.get(ip).get(idAtt) + ".hmm", true)));
+					"./input" + HMMtable.get(ip).get(idAtt) + ".hmm", true)));
 			
 			String[] cve = CVEMAP.get(typeAtt).split("/");
 			String output = "CVE=" + cve[0] + ";Severity=" + cve[1] + ";Risk=" + cve[2] + ";ID="
